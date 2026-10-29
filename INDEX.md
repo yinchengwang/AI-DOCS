@@ -4,14 +4,16 @@ AI-DOCS 内容索引。收录边界见顶层 [README](README.md)，判定口诀�
 
 | 目录 | 放什么 | 详情 |
 |---|---|---|
-| [templates/](templates/README.md) | 跨项目通用的 spec / doc / review / prompt 模板 | [README](templates/README.md) |
-| [methodology/](methodology/README.md) | 可复用的工作方法与流程（设计评审、调试、规划） | [README](methodology/README.md) |
-| [patterns/](patterns/README.md) | 通用架构模式、数据结构选型、流程编排 | [README](patterns/README.md) |
-| [assets/](assets/README.md) | 通用图表、脚本等可复用资产 | [README](assets/README.md) |
-| [prompts/](prompts/README.md) | 通用提示词库 | [README](prompts/README.md) |
-| [agent-notes/](agent-notes/README.md) | agent 通用踩坑经验与最佳实践 | [README](agent-notes/README.md) |
-| [references/](references/README.md) | 外部资料的链接与摘要索引 | [README](references/README.md) |
-| [archive/](archive/README.md) | 已废弃但保留归档的 AI 资产 | [README](archive/README.md) |
+| `templates/` | 跨项目通用的 spec / doc / review / prompt 模板 | [README](templates/README.md) |
+| `methodology/` | 可复用的工作方法与流程（设计评审、调试、规划） | [README](methodology/README.md) |
+| `patterns/` | 通用架构模式、数据结构选型、流程编排 | [README](patterns/README.md) |
+| `assets/` | 通用图表、脚本等可复用资产 | [README](assets/README.md) |
+| `prompts/` | 通用提示词库 | [README](prompts/README.md) |
+| `agent-notes/` | agent 通用踩坑经验与最佳实践 | [README](agent-notes/README.md) |
+| `references/` | 外部资料的链接与摘要索引 | [README](references/README.md) |
+| `archive/` | 已废弃但保留归档的 AI 资产 | [README](archive/README.md) |
+
+> 除 `archive/` 外的 7 个目录当前**均无内容**，各自 README 的「目录骨架」段列出了已就位但为空的子目录。
 
 ## 不收去哪里
 

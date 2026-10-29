@@ -1,0 +1,8 @@
+# 统一行尾：仓内一律存 LF，工作区按平台 checkout
+* text=auto
+
+*.md    text eol=lf
+*.sh    text eol=lf
+*.py    text eol=lf
+*.ps1   text eol=crlf
+*.json  text eol=lf
