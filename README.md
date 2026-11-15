@@ -2,7 +2,7 @@
 
 跨项目复用的 AI 工作资产仓。
 
-本仓是 [StillEvolving](../README.md) 聚合仓下的 **AI 工作文档仓**（submodule，origin `https://github.com/yinchengwang/AI-DOCS.git`），收录跨项目复用的模板、方法论、模式、通用提示词、agent 通用踩坑经验、外部资料索引与通用图表脚本资产。
+本仓是 [code](../README.md) 聚合仓下的 **AI 工作文档仓**（submodule，origin `https://github.com/yinchengwang/AI-DOCS.git`），收录跨项目复用的模板、方法论、模式、通用提示词、agent 通用踩坑经验、外部资料索引与通用图表脚本资产。
 
 ## 仓库关系
 
@@ -10,15 +10,15 @@
 
 | 仓 | 获取方式 | 路径 | 角色 |
 |---|---|---|---|
-| StillEvolving | 父仓 | [`../`](../README.md) | 只放四仓关系，不放业务代码 |
+| code | 父仓 | [`../`](../README.md) | 只放四仓关系，不放业务代码 |
 | projects | submodule | [`../projects/`](../projects/) | 工程仓（引擎 + 小程序 + 项目级文档 + agent 规约） |
 | learning | submodule | [`../learning/`](../learning/) | 学习仓（笔记 + 脚手架 + 题解 + 进度） |
 | **ai-docs** | submodule | 本仓 | **AI 工作文档仓**（跨项目复用的模板与方法论） |
-| reference | 独立仓 + 清单拉取 | [`../../reference/`](../../reference/) | 第三方源码镜像 + 源码笔记（不进 submodule 树） |
+| reference | submodule + `update=none` | [`../reference/`](../reference/) | 第三方源码镜像 + 源码笔记（内部上游按需拉取） |
 
 完整目录规范见父仓 [`../docs/architecture.md`](../docs/architecture.md)；机器可读版见父仓 [`../repos.yaml`](../repos.yaml) 的 `must_contain` 字段。
 
-> 上述跨仓相对路径按本地 StillEvolving 工作区布局书写（父仓 `../`、同级 `../projects/`、`../learning/`、与 StillEvolving 平级但不在其内的 `../../reference/`）。
+> 上述跨仓相对路径按本地 code 工作区布局书写（父仓 `../`、同级 `../projects/`、`../learning/`、`../reference/`）。
 
 ## 收录边界
 
@@ -64,5 +64,5 @@ prompts/       agent-notes/   references/    archive/
 
 - 新增内容放进对应目录，并在该目录 README 的「现有」段登记条目（当前均为「暂无条目」）。
 - 只收换个项目还能直接复用的内容；一旦只对某个项目有意义，就移回 projects / learning / reference。
-- 外部资料只存链接 + 一句摘要，不存副本（副本进 [`../../reference/`](../../reference/)）。
+- 外部资料只存链接 + 一句摘要，不存副本（副本进 [`../reference/`](../reference/)）。
 - 子目录里的 `.gitkeep` 在写入第一个真实文件后删除。
