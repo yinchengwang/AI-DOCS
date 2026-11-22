@@ -106,61 +106,98 @@ P1 generator 的规则是“目录中 `.c` 文件按体积排序，一个文件�
 5. 汇总每组真实篇数与全量篇数；记录 A 组最终 page_file 列表与 writer shards。
 6. 完成只读审计表后，先将结果交用户审阅；用户确认盘点结果后再改 generator 和 manifest。
 
-### P2a 验收测试（TDD）
+### P2a 实施结果（已完成，`feature/wiki-p2a`）
 
-新增/改造测试至少覆盖：
+盘点后把篇数从 332 降到 **151 个机制页、12 个领域**。这是盘点结果，不是配额：
 
-```python
-def test_manifest_count_equals_explicit_specs():
-    manifest = build_manifest(POSTGRES_ROOT)
-    self.assertEqual(len(manifest["pages"]), len(MECHANISM_SPECS))
+| 领域 | 机制数 | 领域 | 机制数 |
+|---|---:|---|---:|
+| A 存储与 IPC | 20 | G 目录与缓存 | 7 |
+| B 事务与 WAL | 19 | H 内存与排序 | 5 |
+| C 堆表与元组 | 15 | I 复制与高可用 | 10 |
+| D 索引族 | 17 | J 服务端与命令面 | 12 |
+| E 优化器 | 13 | K SQL 处理与安全 | 11 |
+| F 执行器 | 13 | L SQL 类型与内建函数 | 9 |
 
-def test_each_group_count_equals_reviewed_inventory():
-    manifest = build_manifest(POSTGRES_ROOT)
-    self.assertEqual(group_counts(manifest), REVIEWED_GROUP_COUNTS)
+关键裁决（用户逐项确认）：
 
-def test_features_and_page_files_are_unique():
-    manifest = build_manifest(POSTGRES_ROOT)
-    self.assert_unique([page["feature"] for page in manifest["pages"]])
-    self.assert_unique([page["page_file"] for page in manifest["pages"]])
+1. 共享缓冲池与 backend-local 池**拆两页**（并发语义不同）。
+2. Shared Invalidation **传输原语归 A**，缓存对象失效语义归 G。
+3. TABLESAMPLE 主归属 **K**（跨 parser/executor/access method 的一条完整机制）。
+4. 旧 H 的 `utils/adt` **新建独立领域 L**，H 只留 memory/sort/resource owner。
+5. 索引 WAL redo **合并为一页** `index-wal-redo`（redo 通用骨架远多于 AM 差异）。
+6. lock + lmgr + deadlock **合并为一页** `lock-manager-deadlock`。
 
-def test_no_cross_group_duplicate_mechanism_key():
-    manifest = build_manifest(POSTGRES_ROOT)
-    self.assertEqual(find_duplicate_mechanism_keys(manifest), [])
+已落地的代码变更：
 
-def test_no_generic_file_fallback_titles():
-    manifest = build_manifest(POSTGRES_ROOT)
-    self.assertFalse([p for p in manifest["pages"] if p["title"].endswith(" 模块")])
+- 新增 `scripts/wiki/postgres_mechanism_specs.py`：151 条 spec，每条含 `feature_group`／`feature`／`title`／`page_file`／`boundary`／`refs`。这是 manifest 的唯一数据源。
+- 重写 `scripts/wiki/gen_postgres_manifest.py`：删除按文件体积选页、按 basename 推 slug/title 的生产路径；新增 `check_specs()` 检查重复 feature、重复 page_file、伪标题、空 boundary、空 refs、缩写路径、非 `src/` 路径、未知分组。
+- 重写 `scripts/wiki/test_gen_postgres_manifest.py`：33 项断言，覆盖分组篇数、编号连续性、`page_file` 尾段等于 feature、无「 模块」伪标题、无测试辅助符号、rmgrdesc 唯一归属、AIO 后端合一、local buffer 独立、refs 可跨文件。
+- 重生成 `docs/wiki/projects/postgres/_manifest.yml`：151 页 / 12 组。
 
-def test_aio_test_helpers_are_not_mechanism_refs():
-    manifest = build_manifest(POSTGRES_ROOT)
-    all_symbols = {s for p in manifest["pages"] for r in p["refs"] for s in r["symbols"]}
-    self.assertFalse({s for s in all_symbols if "test_grow" in s})
+验证证据（全部实跑）：
+
+```
+python gen_postgres_manifest.py --repo-root <cache> --verify --output <manifest>
+  → 151 页 12 组；refs 校验失败 0 条
+python wiki_manifest_lint.py <manifest>            → PASS
+python -m unittest <13 个 wiki 测试模块>            → Ran 312 tests, OK (skipped=1)
 ```
 
-另需真实源码端到端验证：refs.path 存在、符号在目标文件可定位、manifest_lint 0 错误；报告需明确该词边界门禁不证明符号定义语义。reviewer 对显式机制 inventory 与来源文件职责做人工审查。
+**范围说明**：这 151 条只覆盖 PostgreSQL；设计文档里的「332 篇」等旧数字不再作为任何验收口径。E–K 与 L 的 refs 也已用同一 Ctags 函数定义表核过，未命中 0。
 
-### P2a 分步
+### P2a 盘点的证据方法（可复现）
 
-1. 输出完整只读审计表与机制盘点草案，不改 manifest。
-2. 主代理做 A–K 去重/分组 review，向用户呈报每组机制数量、合并/删除/新增项。
-3. 用户批准 inventory 后，为已知缺陷写 RED 测试：测试辅助符号不得作为机制 refs，跨组重复机制被检测，篇数跟随显式 inventory。
-4. 运行 `python -m unittest test_gen_postgres_manifest -v`，确认 RED 指向缺少显式 inventory 或质量断言。
-5. 重构 generator：`MECHANISM_SPECS` 显式列表是唯一生成源；删除按文件大小选页、basename 生成 slug/title 的生产路径。
-6. 重新生成 manifest，逐页检查 refs 文件和符号，人工核对机制对应；不确定符号要追至真实定义/头文件，不只凭词命中。
-7. 运行 manifest 门禁与 P0/P1 全套 unittest；每个合并/拆分/新增/删除都能从审计表解释。
-8. 中文 commit；review clean 后合并推送 projects/main。
+| 步骤 | 做法 | 结果 |
+|---|---|---|
+| 1 | 导出旧 manifest 332 条为审计表，逐条记录 group/feature/title/page_file/refs | 259/332（78.0%）标题是「<文件名> 模块」兜底 |
+| 2 | 用 Universal Ctags 6.1.0 以 `kind=function` 扫 `src/backend/**/*.c`，建 18,547 条定义索引 | 旧 943 个 ref 符号中 940 个是同 path 函数定义，3 个不是（宏参数/类型名） |
+| 3 | 统计跨组重复 path | 6 个 `rmgrdesc` 文件在 B、C 各出现一次，共 12 个旧页实体 |
+| 4 | 按机制边界重新划分，合并/删除/移组/新增 | 332 → 151；rmgrdesc 归 1 页；旧 E 39→13；旧 F 41→13 |
+| 5 | 对新清单逐条核 refs | 151 页全部 `(path, symbol)` 命中定义，0 未命中 |
 
-**P2a stop condition：** 若 inventory 无法证明独立机制边界或 refs 语义关联，暂停正文写作并报告具体争议；禁止以总数目标凑篇。
+Ctags 只能证明「该路径里有这个函数定义」（含 static），**不能**证明它是该页机制的核心入口；机制归属由 spec 的 `boundary` 描述并受人工审阅。
+
 
 ---
 
 ## P2b：重盘后 A 组机制正文试点
 
-writer 分片与文件清单须在 P2a inventory review 完成后更新本计划。不得继续使用旧 `a01`–`a29` 假设。
+A 组已定稿为 **20 个机制页**（旧 A 组 29 页 → 20 页），文件与机制如下。writer 不得改 feature/title/refs：
+
+| # | page_file | feature | 标题 |
+|---:|---|---|---|
+| 01 | `a01-buffer-pool.md` | `buffer-pool` | 共享缓冲池与替换 |
+| 02 | `a02-local-buffer-pool.md` | `local-buffer-pool` | 后端本地缓冲池 |
+| 03 | `a03-procarray-snapshot.md` | `procarray-snapshot` | 活跃事务集合与 MVCC 快照 |
+| 04 | `a04-ssi-predicate-locks.md` | `ssi-predicate-locks` | SSI 谓词锁与冲突检测 |
+| 05 | `a05-lock-manager-deadlock.md` | `lock-manager-deadlock` | 常规锁与死锁检测 |
+| 06 | `a06-fd-cache-file-io.md` | `fd-cache-file-io` | 虚拟文件描述符与文件 I/O |
+| 07 | `a07-backend-proc-slots.md` | `backend-proc-slots` | 后端进程槽 |
+| 08 | `a08-smgr-md-storage.md` | `smgr-md-storage` | 关系物理存储（smgr 与 md） |
+| 09 | `a09-wait-event-sets.md` | `wait-event-sets` | 等待事件集 |
+| 10 | `a10-lwlocks.md` | `lwlocks` | 轻量锁 LWLock |
+| 11 | `a11-read-stream-prefetch.md` | `read-stream-prefetch` | 扫描预读流 |
+| 12 | `a12-shared-memory-allocation.md` | `shared-memory-allocation` | 主共享内存分配 |
+| 13 | `a13-dynamic-shared-memory.md` | `dynamic-shared-memory` | 动态共享内存 DSM |
+| 14 | `a14-shared-memory-message-queues.md` | `shared-memory-message-queues` | 共享内存消息队列 |
+| 15 | `a15-aio-io-methods.md` | `aio-io-methods` | 异步 I/O 请求与执行后端 |
+| 16 | `a16-free-space-map.md` | `free-space-map` | 空闲空间映射 FSM |
+| 17 | `a17-temporary-buffiles.md` | `temporary-buffiles` | 临时 BufFile |
+| 18 | `a18-process-signals-barriers.md` | `process-signals-barriers` | 进程信号与屏障 |
+| 19 | `a19-parallel-query-dsm.md` | `parallel-query-dsm` | 并行查询 DSM 基础设施 |
+| 20 | `a20-shared-invalidation.md` | `shared-invalidation` | 共享失效消息传输原语 |
+
+### Writer 分片（4 个，互不重叠）
+
+| Writer | 页 | 主题 |
+|---|---|---|
+| W1 | `a01`–`a05` | 缓冲池、本地缓冲、事务快照、SSI、常规锁与死锁 |
+| W2 | `a06`–`a10` | 文件 I/O、进程槽、物理存储、等待事件、LWLock |
+| W3 | `a11`–`a15` | 预读流、共享内存、DSM、消息队列、AIO |
+| W4 | `a16`–`a20` | FSM、BufFile、进程信号、并行 DSM、失效消息 |
 
 - 只写 P2a 最终 manifest 标为新 A 组的页。
-- 新 A 组大于等于 16 页时按 4 个 disjoint shards；少于 16 页时改为 2 个分片。
 - writer 只可写分配的 `.md`；不得自行变更 feature/title/refs 或改 `_manifest.yml`。
 - 主代理按页运行 `wiki_lint`、`wiki_refs`；每页双绿后记录完成。
 
