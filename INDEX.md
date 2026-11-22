@@ -27,8 +27,9 @@ AI-DOCS 内容索引。收录边界见顶层 [README](README.md)。
 |---|---|
 | [2026-11-22-multimodal-wiki-and-rag-design.md](methodology/planning/2026-11-22-multimodal-wiki-and-rag-design.md) | 多模态开源项目 Wiki 与 RAG 演示：设计规格。含范围分层（T1/T2/T3）、机制单元粒度判定、六必含章节契约、引用硬失败策略、按库流式并行生产流水线、三栏 RAG 界面。可复用点：**大规模文档语料的契约化生产方式**。 |
 | [2026-11-22-multimodal-wiki-p0-toolbox.md](methodology/planning/2026-11-22-multimodal-wiki-p0-toolbox.md) | 同项目 P0 工装实施计划。7 个 TDD 任务的完整代码与验收命令：契约常量、front-matter 受控子集解析、结构门禁、引用门禁（含 `--locate`）、源码浅克隆缓存、契约文档一致性测试。可复用点：**用机械门禁替代人工 review 的工装设计**。 |
+| [2026-11-22-multimodal-wiki-p1-catalog-and-manifest.md](methodology/planning/2026-11-22-multimodal-wiki-p1-catalog-and-manifest.md) | 同项目 P1 计划。8 个任务：清单解析与校验、manifest 读写与门禁、源码目录枚举、清单扩容（stars 经 GitHub API 实取）、postgres 332 篇 manifest 生成。可复用点：**把「写哪些页」变成可校验的机器清单**，写作阶段只读清单、不自由发挥。 |
 
-> 这两份文档的**代码产物**在 [`projects/scripts/wiki/`](../../projects/scripts/wiki/) 与 [`projects/docs/wiki/`](../../projects/docs/wiki/)，不重复存放在本仓。
+> 这几份文档的**代码产物**在 [`projects/scripts/wiki/`](../../projects/scripts/wiki/) 与 [`projects/docs/wiki/`](../../projects/docs/wiki/)，不重复存放在本仓。
 
 ## 不收去哪里
 
