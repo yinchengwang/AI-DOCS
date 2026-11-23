@@ -2,6 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行后注记（2026-11-23 核对）**
+>
+> - 本计划正文里的 **「A–K」「11 组」是盘点前的假设**；盘点结果新增了第 12 组
+>   `L-SQL类型与内建函数`（SQL 类型与内建函数）。最终口径是 **12 组 / 151 页**：
+>   A20 B19 C15 D17 E13 F13 G7 H5 I10 J12 K11 L9。
+> - **「332」是 P1 旧生成器按文件体积产出的篇数，不是机制篇数**；其中 259 篇（78.0%）标题是
+>   「<文件名> 模块」兜底。该生成器已被 `postgres_mechanism_specs.py` + `gen_postgres_manifest.py` 替换。
+> - 下文的任务步骤保留原始措辞，作为执行记录，不做追溯改写；**执行结果见文末「P2 执行结果」**。
+
 **Goal:** 以真实、互不重复的 PostgreSQL 机制单元重建 P1 的 A–K manifest（不再把 332 当作机制篇数硬指标），再从重盘后的 A 组开展正文试点，双门禁通过、深度抽检合格后产出 `_index.md`，并记录实际耗时、返工率与一次通过率。
 
 **Architecture:** P2a 审核现有 332 个 page spec 与其源码落点，合并重复条目、拆出确实独立的机制、补入被漏掉的真实机制，得到新的 A–K 篇数与总量；总数是盘点结果，不是约束。manifest spec 显式表达机制 slug/title 与一条或多条 refs，不再由文件体积机械生成。P2b 在重建 manifest 通过门禁后，从新的 A 组写机制页；用 disjoint writer 分片并行，主代理运行 `wiki_lint` + `wiki_refs` 硬门禁、随机抽 5 页深度复核，再生成 `_index.md`。
