@@ -1,5 +1,15 @@
 # wiki P3（postgres 剩余 131 页批量写作）Implementation Plan
 
+> **执行状态（2026-11-23 完成）**：131 页全部写完并入库。
+> - 目录门禁：`wiki_lint` 152 页 0 失败、`wiki_refs` 152 页 0 失败、`wiki_manifest_lint` PASS
+> - 契约测试：`test_postgres_mechanism_pages` 扩展到 **151 页全覆盖**（6/6 通过）
+> - 全套工装测试：`Ran 353 tests ... OK (skipped=1)`
+> - 导航：`_index.md` 由 `scripts/wiki/rebuild_postgres_index.py` 从 manifest 生成，151 行
+> - 验收与抽检记录：`projects/docs/wiki/p3-full-report.md`、`p3-review-a-bc.md`（A/B/C）、
+>   `p3-review-d-ef.md`（D/E/F）、`p3-review-g-l.md`（G–L 抽样）
+> - 与原计划的偏差（并发度、波次口径、抽检页数）与 10 页抽检修订明细见 `p3-full-report.md` §5
+> - **本计划正文保留为原始执行记录，不按实际执行回改。**
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 按 P2 定稿的机制清单写完 postgres 剩余 **131 页**（B–L 共 11 组），把 A 组试点的结论放大到全库，并产出可核对的吞吐/返工/质量记录。
