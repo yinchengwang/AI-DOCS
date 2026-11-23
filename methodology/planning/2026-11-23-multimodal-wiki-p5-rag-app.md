@@ -27,13 +27,13 @@
 | 项 | 实测值 |
 |---|---|
 | RAG 应用代码骨架 | **不存在**（`projects/apps/wiki-rag` 不存在） |
-| 切块/索引/嵌入脚本 | **不存在**（`projects/scripts/wiki/` 28 个 `.py` 中无任何相关脚本） |
+| 切块/索引/嵌入脚本 | **不存在**（`projects/scripts/wiki/` 27 个 `.py` 中无任何相关脚本） |
 | 语料规模（当前） | postgres 21 页（20 feature + 1 overview），正文 44,709 字符 / 83,763 B |
 | 页面结构规整度 | 21/21 页均为 7 个 H2，标题完全一致；H1 与 manifest `title` 一致 |
 | 切块粒度实测 | 按 `##` 切出 **147 段**，段长 38–865 字符，中位 **233** |
 | front-matter 结构 | feature 页恰好 5 键（`project`/`feature`/`page_type`/`schema_version`/`refs`）；overview 页 9 键 |
 | 解析器 | `wiki_frontmatter.parse_frontmatter` 恰好支持 `refs[].path` + `symbols: [a, b]` 这一层嵌套 → **直接复用，无需另写 YAML 解析** |
-| `apps/` 现状 | 6 个子目录：4 个原生小程序、`trip-log`（带 npm 依赖）、`study-hub`（Node 本机服务）。**无任何 `requirements.txt` / `pyproject.toml`，无 Python 后端** |
+| `apps/` 现状 | 5 个应用子目录 + 1 个空 `.archive`：3 个微信小程序（`games` / `knowledge-hub` / `programmer-workbench`，`app.json` + `app.wxss`）、`trip-log`（`package.json` 含 1 个依赖 `@tencent-ai/workbuddy-cloud-sdk`）、`study-hub`（`package.json` **0 依赖**）。**无任何 `requirements.txt` / `pyproject.toml`，无 Python 后端** |
 | 风格样板 | `study-hub`：`server/ + web/ + tests/run-all.js + tools/ + 零依赖` |
 
 **必须先解决的显式分歧**：`apps/` 至今零 pip 依赖、零 Python 后端。P5 是第一个带 pip 依赖与 HTTP 后端的应用。这不是缺陷，但要在计划里写死取舍，不能含糊过去（见 §1.3）。

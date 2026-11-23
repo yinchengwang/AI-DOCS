@@ -75,11 +75,14 @@
 
 | 波次 | 分片 | 页数 | 并发 | 覆盖组 |
 |---|---|---:|---:|---|
-| Wave 1 | S1–S4 | 36 | 4 | B、C |
-| Wave 2 | S5–S8 | 35 | 4 | D、E |
-| Wave 3 | S9–S12 | 31 | 4 | F、G、H |
-| Wave 4 | S13–S16 | 33 | 4 | I、J |
-| Wave 5 | S17–S20 | 26 | 4 | K、L |
+| Wave 1 | S1–S4 | 34 | 4 | B、C |
+| Wave 2 | S5–S8 | 30 | 4 | D、E |
+| Wave 3 | S9–S12 | 25 | 4 | F、G、H |
+| Wave 4 | S13–S16 | 22 | 4 | I、J |
+| Wave 5 | S17–S20 | 20 | 4 | K、L |
+
+合计 **131 页**（34+30+25+22+20）。页数由上方分片表逐片相加得出，与
+`postgres_mechanism_specs.py` 的实际 `page_file` 清单一一对应（已逐片核对）。
 
 **并发上限先取 4。** 试点实测：4 路并行、20 页、各分片 7–14 分钟，未见冲突或质量下降；8 路没有实测依据。
 每个波次跑完后再决定下一波是否提到 8：**判据是「一次通过率 ≥ 80% 且抽检无系统性错误」**，不是「时间紧」。
@@ -185,8 +188,19 @@ python wiki_refs.py C:\code\projects\docs\wiki\projects\postgres `
 
 ### 4.2 深度抽检
 
-**每波每组抽 1 页**（波次 5 组 = 抽 5 页），全库合计 ≥ 55 页。
-抽样用固定 seed `random.Random(20261123)` 从各组页列表中取，保证可复现。
+**每波覆盖的每个组抽 5 页**（试点期是 20 页抽 5 页，抽样比例沿用 25%；本阶段按组固定 5 页，
+便于跨组横向比较）。各波组数与页数：
+
+| 波次 | 覆盖组 | 抽检页数 |
+|---|---|---:|
+| Wave 1 | B、C | 10 |
+| Wave 2 | D、E | 10 |
+| Wave 3 | F、G、H | 15 |
+| Wave 4 | I、J | 10 |
+| Wave 5 | K、L | 10 |
+| **合计** | **11 组** | **55** |
+
+抽样用固定 seed `random.Random(20261123)` 从各组页列表中按序取，保证可复现。
 
 每页按 6 项评分（每项 0/1），抽检须由**独立于该页 writer 的审阅者**执行：
 
@@ -208,7 +222,8 @@ python wiki_refs.py C:\code\projects\docs\wiki\projects\postgres `
 
 ### 4.3 全库抽检
 
-11 组写完后，对全库再抽 10 页做终检，抽样 seed `random.Random(20261123)` 续用同一序列。
+11 组写完后，对全库再抽 10 页做终检（抽样 seed `random.Random(20261123)` 续用同一序列），
+重点看跨组一致性：术语是否统一、机制边界是否互相越界、refs 符号职责是否解释正确。
 
 ---
 
@@ -269,7 +284,7 @@ python -m unittest test_wiki_schema test_wiki_frontmatter test_wiki_lint `
   test_catalog_additions test_gen_postgres_manifest test_postgres_mechanism_pages
 ```
 
-4. 每波每组至少抽 1 页，评分记录完整；全库终检 10 页完成。
+4. 每波覆盖的每个组抽检 5 页（共 55 页），评分记录完整；全库终检 10 页完成。
 5. `_index.md` 重建并含 151 页完整导航表，通过 lint 与 refs。
 6. `p3-full-report.md` 落盘，含上述全部记录项。
 7. `.cache/repos/postgres` 仍被 gitignore 忽略。
