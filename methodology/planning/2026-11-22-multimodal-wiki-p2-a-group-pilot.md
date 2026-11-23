@@ -305,3 +305,69 @@ python -m unittest test_wiki_schema test_wiki_frontmatter test_wiki_lint `
 - 不做 P3 全量 token 预算实测；只报告本试点可观测数据与估算。
 - 不开发 RAG 应用。
 - 不回填 catalog 旧条目占位 stars、不改 `ai/rag`/`ai/agent`/`ai/llm` 口径、不改 `schema_version`。
+
+---
+
+## P2 执行结果（已完成，`feature/wiki-p2a` → projects/main）
+
+### P2a：机制盘点与 manifest 重建 —— 完成
+
+盘点结论、裁决、代码变更与证据方法见上文「P2a 实施结果」。要点复述：
+
+- 篇数 **332 → 151**，新增第 12 组 `L-SQL类型与内建函数`。
+- 新增 `projects/scripts/wiki/postgres_mechanism_specs.py`（151 条 spec，唯一数据源）。
+- 重写 `gen_postgres_manifest.py`（由 spec 生成 + `check_specs()` 自检）与 `test_gen_postgres_manifest.py`（33 项断言）。
+- 重生成 `_manifest.yml`：151 页 / 12 组；604 个 `(path, symbol)` ref 对全部命中，0 失败。
+- 合并提交 `058673f6d`，已推送 `projects/main`。
+
+### P2b：A 组 20 页正文 —— 完成
+
+4 个 disjoint writer 分片（W1–W4，各 5 页）写完 `a01`–`a20`。
+页面路径、slug、标题、refs 与 `_manifest.yml` 逐页深度相等（20/20 一致）；
+UTF-8 无 BOM、LF；每页 7 个契约 H2；无 `path:line` 引用。
+
+### P2c：双门禁 —— 完成
+
+```text
+python wiki_lint.py docs/wiki/projects/postgres --quiet
+  -- 检查 21 页，失败 0 页
+
+python wiki_refs.py docs/wiki/projects/postgres \
+  --repo-root .cache/repos/postgres --quiet
+  -- 检查 21 页，失败 0 页
+```
+
+（21 页 = 20 个机制页 + `_index.md`。）失败修复只改 FAIL 页，未放宽门禁。
+
+### P2d：深度抽检、`_index.md`、试点报告 —— 完成
+
+固定 seed `random.Random(20261122)` 抽出 a19 / a17 / a08 / a13 / a02 五页，
+按 6 项评分表逐项复核。初审 **27/30**，修复后 **29/30**；
+a19 的「取舍」项因缺少具体 caller 的 fallback 证据保留 0，未凑满分。
+
+`_index.md` 按 `page_type: overview` 生成（契约字段齐全 + refs），通过 lint 与 refs 两道门禁。
+试点报告见 `projects/docs/wiki/p2-pilot-report.md`（含各分片时长、抽检分项、扩容估算）。
+
+### P2e：验收 —— 完成
+
+```text
+python -m unittest test_wiki_schema test_wiki_frontmatter test_wiki_lint \
+  test_wiki_refs test_repo_cache test_wiki_schema_doc test_wiki_catalog \
+  test_wiki_manifest test_wiki_manifest_lint test_wiki_tree test_build_catalog \
+  test_catalog_additions test_gen_postgres_manifest test_postgres_mechanism_pages
+  Ran 315 tests ... OK (skipped=1)
+```
+
+提交与推送：`a7a86b1ce`（A 组 20 页 + `_index.md` + 试点报告 + 契约测试）、
+`e98be5f15`（外链修正 + a19 退化语义收窄）、`d411d929a`（抽检结论修订）。
+`.cache/` 被 gitignore 忽略，未入库；`engine/db` 下的用户改动全程未暂存。
+
+### 遗留（转入下一阶段）
+
+| 项 | 去向 |
+|---|---|
+| B–L 共 131 页正文 | P3 `2026-11-23-multimodal-wiki-p3-postgres-full.md` |
+| a19 取舍证据补足 | P3 写作同主题页时补具体 caller 证据并回填评分 |
+| 其余库流式推进 | P4 `2026-11-23-multimodal-wiki-p4-other-libraries.md` |
+| RAG 应用 | P5 `2026-11-23-multimodal-wiki-p5-rag-app.md` |
+| 清单 152 → 270 条 | P4 扩容批次，逐条实取 stars |

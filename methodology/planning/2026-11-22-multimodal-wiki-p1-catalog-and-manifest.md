@@ -2,6 +2,30 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行后注记（2026-11-22）**
+>
+> 本计划原文按 `reference/` 仓书写，执行后产物已迁至 **`projects` 仓**：
+>
+> | 原路径 | 现路径 |
+> |---|---|
+> | `reference/scripts/wiki_catalog.py` 等 4 个模块及其测试 | `projects/scripts/wiki/` |
+> | `reference/docs/wiki-schema.md` | `projects/docs/wiki/wiki-schema.md` |
+> | `reference/.cache/repos/` | `projects/.cache/repos/` |
+>
+> **两处与本计划原文不符的实测结果：**
+>
+> 1. **清单规模**：Task 6 的目标是「97 → 130+ 条」，实际产出 **152 条**
+>    （T1 39 / T2 85 / T3 28），未达设计文档的 270 条目标；缺口 118 条已登记为未决项，
+>    不以凑数方式补齐。
+> 2. **postgres manifest**：Task 7 产出的是**按文件体积生成的 332 篇**，
+>    其中 259 篇（78.0%）标题是「<文件名> 模块」兜底，不是机制。
+>    该生成器已在 **P2a 被整体废弃**并替换为机制优先的实现：
+>    `projects/scripts/wiki/postgres_mechanism_specs.py`（151 条 spec，唯一数据源）
+>    + `gen_postgres_manifest.py`（由 spec 生成 manifest，`check_specs()` 自检）。
+>    最终清单为 **151 页 / 12 组**（A20 B19 C15 D17 E13 F13 G7 H5 I10 J12 K11 L9）。
+>
+> **下文的任务步骤保留原始路径与原始数字，作为执行记录，不做追溯改写。**
+
 **Goal:** 建成项目清单（270 库分层）与机制页 manifest 的生成、校验工具链，并用 postgres 产出 332 篇真实 manifest，作为后续批量写作的输入契约。
 
 **Architecture:** 四个新增模块各担一职：`wiki_catalog` 只读 catalog 并做分层判定，`wiki_manifest` 只做 manifest 的读写与校验，`wiki_manifest_lint` 只做 manifest 门禁 CLI，`wiki_tree` 只做源码目录树到机制单元的枚举。所有模块沿用 P0 的「标准库 + unittest + 硬门禁」风格，禁止引入第三方依赖。
@@ -2129,26 +2153,28 @@ git push origin main
 
 ## 交付物清单
 
-P1 完成后可用：
+P1 完成后可用（**实际落盘状态见文首执行后注记**）：
 
 | 能力 | 入口 |
 |---|---|
-| 文档生产清单（130+ 库，T1/T2/T3 分层，stars 实取） | `projects/docs/wiki/catalog-projects.yml` |
+| 文档生产清单（**实测 152 条**，T1 39 / T2 85 / T3 28，stars 实取） | `projects/docs/wiki/catalog-projects.yml` |
 | 清单解析与校验 | `wiki_catalog.parse_catalog` / `validate_entry` |
 | 清单从镜像清单继承 | `build_catalog.merge_from_reference` |
 | manifest 读写 | `wiki_manifest.load_manifest` / `dump_manifest` |
 | manifest 门禁 | `python wiki_manifest_lint.py <path>` |
 | 源码目录枚举 | `wiki_tree.list_module_dirs` |
-| postgres 332 篇机制页清单 | `projects/docs/wiki/projects/postgres/_manifest.yml` |
+| postgres 机制页清单（**P2a 重建后为 151 页 / 12 组**） | `projects/docs/wiki/projects/postgres/_manifest.yml` |
 
 后续计划依赖：
 
-- **Plan C（postgres 332 篇写作）** 依赖本计划的 `_manifest.yml` 作为唯一输入契约
-- **Plan D（其余库流式推进）** 依赖本计划的清单与 manifest 工具链
-- **Plan E（RAG 应用）** 依赖 `wiki_frontmatter` 与 `_manifest.yml` 做增量索引
+- **P3（postgres 余下 131 页写作）** 依赖本计划的 `_manifest.yml` 作为唯一输入契约
+- **P4（其余库流式推进）** 依赖本计划的清单与 manifest 工具链
+- **P5（RAG 应用）** 依赖 `wiki_frontmatter` 与 `_manifest.yml` 做增量索引
 
 ## 未决事项（不在本计划范围）
 
 1. 清单是否要扩到 270 库：本计划做到 130+ 并建好工具，继续扩容属增量工作，可按需分批。
+   **当前实况 152 条，缺口 118 条**；扩容须逐条实取 stars/license/language，不得凑数。
 2. `feature_group` / `feature_summary` / `created` / `updated` 是否纳入 `wiki_schema` 必填字段：P0 评审已记为待决，需契约升版才能改。
-3. `refs: []` 是否允许：同上，属契约决策。
+   **P2a 已定**：这些字段不进特性页 front-matter，分组与标题由 `_manifest.yml` 承载，项目级元信息由 `_index.md` 承载。
+3. `refs: []` 是否允许：同上，属契约决策。**P2a 实操已定**：refs 必须非空。
